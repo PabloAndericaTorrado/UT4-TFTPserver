@@ -11,3 +11,11 @@ Este proyecto implementa un servidor y cliente TFTP (Trivial File Transfer Proto
 
 ## Requisitos
 - Java SDK 17 o superior
+
+## Operaciones TFTP Principales:
+
+-   **RRQ (Read Request):** El cliente solicita leer un archivo al servidor.
+-   **WRQ (Write Request):** El cliente solicita escribir un archivo al servidor.
+-   **DATA:** Transferencia de datos desde el servidor al cliente.
+-   **ACK (Acknowledgment):** Confirmación del cliente al servidor de la recepción de bloques de datos.
+-   **ERROR:** Informa al cliente sobre errores durante la transferencia.
