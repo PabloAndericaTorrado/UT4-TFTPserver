@@ -81,7 +81,6 @@ class TFTPserverRRQ extends Thread {
 					if(timeoutLimit==0){throw new Exception("connection failed");}
 				}
 				System.out.println("Transfer completed.(Client " +host +")" );
-				System.out.println("Filename: "+fileName + "\nSHA1 checksum: "+CheckSum.getChecksum("../"+fileName)+"\n");
 			} catch (Exception e) {
 				TFTPerror ePak = new TFTPerror(1, e.getMessage());
 

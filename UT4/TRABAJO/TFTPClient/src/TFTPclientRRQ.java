@@ -96,7 +96,6 @@ class TFTPclientRRQ {
 				}
 			}
 			System.out.println("\nDownload Finished.\nFilename: " + fileName);
-			System.out.println("SHA1 Checksum: " + CheckSum.getChecksum("../"+fileName));
 			
 			outFile.close();
 			sock.close();

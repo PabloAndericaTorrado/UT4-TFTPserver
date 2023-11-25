@@ -90,7 +90,6 @@ class TFTPclientWRQ {
 			sock.close();
 			
 			System.out.println("\nUpload finished!\nFilename: "+fileName);
-			System.out.println("SHA1 Checksum: " + CheckSum.getChecksum("../"+fileName));
 
 		} catch (SocketTimeoutException t) {
 			System.out.println("No response from sever, please try again");
