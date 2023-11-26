@@ -1,105 +1,96 @@
 import java.net.*;
+import java.security.MessageDigest;
 import java.io.*;
 import java.util.*;
 
+class TFTPserverRRQ extends Thread {
 
+    protected DatagramSocket Socket;
+    protected InetAddress host;
+    protected int port;
+    protected FileInputStream source;
+    protected TFTPpacket req;
+    protected int timeoutLimit = 5;
+    protected String nombreArchivo;
 
-class TFTPserverWRQ extends Thread {
+    // Inicializar solicitud de lectura
+    public TFTPserverRRQ(TFTPread solicitud) throws TftpException {
+        try {
+            req = solicitud;
+            // Abrir nuevo socket con número de puerto aleatorio para transferencia
+            Socket = new DatagramSocket();
+            Socket.setSoTimeout(1000);
+            nombreArchivo = solicitud.nombreArchivo();
 
-	protected DatagramSocket sock;
-	protected InetAddress host;
-	protected int port;
-	protected FileOutputStream outFile;
-	protected TFTPpacket req;
-	protected int timeoutLimit = 5;
-	//protected int testloss=0;
-	protected File saveFile;
-	protected String fileName;
+            host = solicitud.getAddress();
+            port = solicitud.getPort();
+            
+            // Crear objeto de archivo en la carpeta principal
+            File archivoFuente = new File("../" + nombreArchivo);
 
-	// Initialize read request
-	public TFTPserverWRQ(TFTPwrite request) throws TftpException {
-		try {
-			req = request;
-			sock = new DatagramSocket(); // new port for transfer
-			sock.setSoTimeout(1000);
+            // Verificar archivo
+            if (archivoFuente.exists() && archivoFuente.isFile() && archivoFuente.canRead()) {
+                source = new FileInputStream(archivoFuente);
+                this.start(); // Abrir nuevo hilo para la transferencia
+            } else
+                throw new TftpException("violación de acceso");
 
-			host = request.getAddress();
-			port = request.getPort();
-			fileName = request.fileName();
-			//create file object in parent folder
-			saveFile = new File("../"+fileName);
+        } catch (Exception e) {
+            TFTPerror ePak = new TFTPerror(1, e.getMessage()); // código de error 1
+            try {
+                ePak.send(host, port, Socket);
+            } catch (Exception f) {
+            }
 
-			if (!saveFile.exists()) {
-				outFile = new FileOutputStream(saveFile);
-				TFTPack a = new TFTPack(0);
-				a.send(host, port, sock); // send ack 0 at first, ready to
-											// receive
-				this.start();
-			} else
-				throw new TftpException("access violation, file exists");
+            System.out.println("Fallo de inicio del cliente: " + e.getMessage());
+        }
+    }
 
-		} catch (Exception e) {
-			TFTPerror ePak = new TFTPerror(1, e.getMessage()); // error code 1
-			try {
-				ePak.send(host, port, sock);
-			} catch (Exception f) {
-			}
+    // Todo está bien, abrir nuevo hilo para transferir archivo
+    public void run() {
+        int bytesRead = TFTPpacket.LongitudMaximaDePaquete;
+        // Manejar solicitud de lectura
+        if (req instanceof TFTPread) {
+            try {
+                for (int numBloque = 1; bytesRead == TFTPpacket.LongitudMaximaDePaquete; numBloque++) {
+                    TFTPdata outPak = new TFTPdata(numBloque, source);
+                    bytesRead = outPak.getLength();
+                    outPak.send(host, port, Socket);
+                    
+                    // Esperar el ACK correcto. Si es incorrecto, reintenta hasta 5 veces
+                    while (timeoutLimit != 0) {
+                        try {
+							TFTPpacket ack = TFTPpacket.receive(Socket);
+                            if (!(ack instanceof TFTPack)) {
+                                throw new Exception("Fallo del cliente");
+                            }
+                            TFTPack a = (TFTPack) ack;
+                            
+                            if (a.numeroBloque() != numBloque) { // Verificar ACK
+                                throw new SocketTimeoutException("Paquete perdido, reenviar");
+                            }
+                            break;
+                        } catch (SocketTimeoutException t) { // Reenviar último paquete
+                            System.out.println("Reenviar bloque " + numBloque);
+                            timeoutLimit--;
+                            outPak.send(host, port, Socket);
+                        }
+                    } // Fin del while
+                    if (timeoutLimit == 0) {
+                        throw new Exception("falla de conexión");
+                    }
+                }
+                System.out.println("Transferencia completada. (Cliente " + host + ")");
+            } catch (Exception e) {
+                TFTPerror ePak = new TFTPerror(1, e.getMessage());
 
-			System.out.println("Client start failed:" + e.getMessage());
-		}
-	}
+                try {
+                    ePak.send(host, port, Socket);
+                } catch (Exception f) {
+                }
 
-	public void run() {
-		/*int bytesRead = TFTPpacket.maxTftpPakLen;*/
-		// handle write request
-		if (req instanceof TFTPwrite) {
-			try {
-				for (int blkNum = 1, bytesOut = 512; bytesOut == 512; blkNum++) {
-					while (timeoutLimit != 0) {
-						try {
-							TFTPpacket inPak = TFTPpacket.receive(sock); 
-							//check packet type
-							if (inPak instanceof TFTPerror) {
-								TFTPerror p = (TFTPerror) inPak;
-								throw new TftpException(p.message());
-							} else if (inPak instanceof TFTPdata) {
-								TFTPdata p = (TFTPdata) inPak;
-								/*System.out.println("incoming data " + p.blockNumber());*/
-								// check blk num
-								if (/*testloss==20||*/p.blockNumber() != blkNum) { //expect to be the same
-									//System.out.println("loss. testloss="+testloss+"timeoutLimit="+timeoutLimit);
-									//testloss++;
-									throw new SocketTimeoutException();
-								}
-								//write to the file and send ack
-								bytesOut = p.write(outFile);
-								TFTPack a = new TFTPack(blkNum);
-								a.send(host, port, sock);
-								//testloss++;
-								break;
-							}
-						} catch (SocketTimeoutException t2) {
-							System.out.println("Time out, resend ack");
-							TFTPack a = new TFTPack(blkNum - 1);
-							a.send(host, port, sock);
-							timeoutLimit--;
-						}
-					}
-					if(timeoutLimit==0){throw new Exception("Connection failed");}
-				}
-				System.out.println("Transfer completed.(Client " +host +")" );
-
-				
-			} catch (Exception e) {
-				TFTPerror ePak = new TFTPerror(1, e.getMessage());
-				try {
-					ePak.send(host, port, sock);
-				} catch (Exception f) {
-				}
-
-				System.out.println("Client failed:  " + e.getMessage());
-				saveFile.delete();
-			}
-		}
-	}
+                System.out.println("Fallo del cliente: " + e.getMessage());
+            }
+        }
+    }
 }
