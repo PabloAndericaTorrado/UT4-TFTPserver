@@ -1,282 +1,262 @@
-
-
 import java.net.*;
 import java.io.*;
 import java.util.*;
 
 class TftpException extends Exception {
-	public TftpException() {
-		super();
-	}
-	public TftpException(String s) {
-		super(s);
-	}
+    public TftpException() {
+        super();
+    }
+
+    public TftpException(String s) {
+        super(s);
+    }
 }
+
 //////////////////////////////////////////////////////////////////////////////
-//GENERAL packet: define the packet structure, necessary members and methods// 
-//of TFTP packet. To be extended by other specific packet(read, write, etc) //
+// Paquete GENERAL: define la estructura del paquete, miembros y métodos    //
+// necesarios del paquete TFTP. Para ser extendido por otros paquetes       //
+// específicos (lectura, escritura, etc.)                                  //
 //////////////////////////////////////////////////////////////////////////////
 public class TFTPpacket {
 
-  // TFTP constants
-  public static int tftpPort = 69;
-  public static int maxTftpPakLen=516;
-  public static int maxTftpData=512;
+    // Constantes TFTP
+    public static int Puerto = 69;
+    public static int LongitudMaximaDePaquete = 516;
+    public static int DatosMaximosTFTP = 512;
 
-  // Tftp opcodes
-  protected static final short tftpRRQ=1;
-  protected static final short tftpWRQ=2;
-  protected static final short tftpDATA=3;
-  protected static final short tftpACK=4;
-  protected static final short tftpERROR=5;
+    // Códigos de operación TFTP
+    protected static final short tftpRRQ = 1;
+    protected static final short tftpWRQ = 2;
+    protected static final short tftpDATA = 3;
+    protected static final short tftpACK = 4;
+    protected static final short tftpERROR = 5;
 
-  // Packet Offsets
-  protected static final int opOffset=0;
+    // Desplazamientos en el paquete
+    protected static final int opOffset = 0;
+    protected static final int fileOffset = 2;
+    protected static final int blkOffset = 2;
+    protected static final int dataOffset = 4;
+    protected static final int numOffset = 2;
+    protected static final int msgOffset = 4;
 
-  protected static final int fileOffset=2;
+    // El paquete real para la transferencia UDP
+    protected byte[] message;
+    protected int length;
 
-  protected static final int blkOffset=2;
-  protected static final int dataOffset=4;
+    // Información de dirección (necesaria para respuestas)
+    protected InetAddress host;
+    protected int port;
 
-  protected static final int numOffset=2;
-  protected static final int msgOffset=4;
-
-  // The actual packet for UDP transfer
-  protected byte [] message;
-  protected int length;
-
-  // Address info (required for replies)
-  protected InetAddress host;
-  protected int port;
-
-  // Constructor 
-  public TFTPpacket() {
-    message=new byte[maxTftpPakLen]; 
-    length=maxTftpPakLen; 
-  } 
-
-  // Methods to receive packet and convert it to yhe right type(data/ack/read/...)
-  public static TFTPpacket receive(DatagramSocket sock) throws IOException {
-    TFTPpacket in=new TFTPpacket(), retPak=new TFTPpacket();
-    //receive data and put them into in.message
-    DatagramPacket inPak = new DatagramPacket(in.message,in.length);
-    sock.receive(inPak); 
-    
-    //Check the opcode in message, then cast the message into the corresponding type
-    switch (in.get(0)) {
-      case tftpRRQ:
-    	  retPak=new TFTPread();
-        break;
-      case tftpWRQ:
-    	  retPak=new TFTPwrite();
-        break;
-      case tftpDATA:
-    	  retPak=new TFTPdata();
-        break;
-      case tftpACK:
-    	  retPak=new TFTPack();
-        break;
-      case tftpERROR:
-    	  retPak=new TFTPerror();
-        break;
+    // Constructor
+    public TFTPpacket() {
+        message = new byte[LongitudMaximaDePaquete];
+        length = LongitudMaximaDePaquete;
     }
-    retPak.message=in.message;
-    retPak.length=inPak.getLength();
-    retPak.host=inPak.getAddress();
-    retPak.port=inPak.getPort();
 
-    return retPak;
-  }
-  
-  //Method to send packet
-  public void send(InetAddress ip, int port, DatagramSocket s) throws IOException {
-    s.send(new DatagramPacket(message,length,ip,port));
-  }
+    // Métodos para recibir el paquete y convertirlo al tipo correcto (datos/ACK/lectura/...)
+    public static TFTPpacket receive(DatagramSocket Socket) throws IOException {
+        TFTPpacket Entrada = new TFTPpacket(), PaqueteDevuelto = new TFTPpacket();
+        // Recibir datos y ponerlos en in.message
+        DatagramPacket PaqueteEntrada = new DatagramPacket(Entrada.message, Entrada.length);
+        Socket.receive(PaqueteEntrada);
 
-  // DatagramPacket like methods
-  public InetAddress getAddress() {
-    return host;
-  }
+        // Comprobar el código de operación en el mensaje, luego convertir el mensaje al tipo correspondiente
+        switch (Entrada.get(0)) {
+            case tftpRRQ:
+                PaqueteDevuelto = new TFTPread();
+                break;
+            case tftpWRQ:
+                PaqueteDevuelto = new TFTPwrite();
+                break;
+            case tftpDATA:
+                PaqueteDevuelto = new TFTPdata();
+                break;
+            case tftpACK:
+                PaqueteDevuelto = new TFTPack();
+                break;
+            case tftpERROR:
+                PaqueteDevuelto = new TFTPerror();
+                break;
+        }
+        PaqueteDevuelto.message = Entrada.message;
+        PaqueteDevuelto.length = PaqueteEntrada.getLength();
+        PaqueteDevuelto.host = PaqueteEntrada.getAddress();
+        PaqueteDevuelto.port = PaqueteEntrada.getPort();
 
-  public int getPort() {
-    return port;
-  }
+        return PaqueteDevuelto;
+    }
 
-  public int getLength() {
-    return length;
-  }
+    // Método para enviar el paquete
+    public void send(InetAddress ip, int puerto, DatagramSocket Socket) throws IOException {
+        Socket.send(new DatagramPacket(message, length, ip, puerto));
+    }
 
-  // Methods to put opcode, blkNum, error code into the byte array 'message'. 
-  protected void put(int at, short value) {
-    message[at++] = (byte)(value >>> 8);  // first byte
-    message[at] = (byte)(value % 256);    // last byte
-  }
+    // Métodos similares a DatagramPacket
+    public InetAddress getAddress() {
+        return host;
+    }
 
-  @SuppressWarnings("deprecation")
-  //Put the filename and mode into the 'message' at 'at' follow by byte "del"
-  protected void put(int at, String value, byte del) {
-    value.getBytes(0, value.length(), message, at);
-    message[at + value.length()] = del;
-  }
+    public int getPort() {
+        return port;
+    }
 
-  protected int get(int at) {
-    return (message[at] & 0xff) << 8 | message[at+1] & 0xff;
-  }
+    public int getLength() {
+        return length;
+    }
 
-  protected String get (int at, byte del) {
-    StringBuffer result = new StringBuffer();
-    while (message[at] != del) result.append((char)message[at++]);
-    return result.toString();
-  }
+    // Métodos para colocar el código de operación, número de bloque, código de error en el arreglo de bytes 'message'
+    protected void put(int at, short value) {
+        message[at++] = (byte) (value >>> 8);  // primer byte
+        message[at] = (byte) (value % 256);    // último byte
+    }
+
+    @SuppressWarnings("deprecation")
+    protected void put(int at, String valor, byte del) {
+        valor.getBytes(0, valor.length(), message, at);
+        message[at + valor.length()]=del;
+    }
+
+    protected int get(int at) {
+        return (message[at] & 0xff) << 8 | message[at + 1] & 0xff;
+    }
+
+    protected String get(int at, byte del) {
+        StringBuffer result = new StringBuffer();
+        while (message[at] != del) result.append((char) message[at++]);
+        return result.toString();
+    }
 }
 
 ////////////////////////////////////////////////////////
-//DATA packet: put the right code in the message; read// 
-//file for sending; write file after receiving        //
+// Paquete DATA: coloca el código correcto en el     //
+// mensaje; lee archivo para enviar; escribe archivo  //
+// después de recibir                                //
 ////////////////////////////////////////////////////////
 final class TFTPdata extends TFTPpacket {
+    // Constructores
+    protected TFTPdata() {}
 
-	// Constructors
-	protected TFTPdata() {}
-	public TFTPdata(int blockNumber, FileInputStream in) throws IOException {
-		this.message = new byte[maxTftpPakLen];
-		// manipulate message
-		this.put(opOffset, tftpDATA);
-		this.put(blkOffset, (short) blockNumber);
-		// read the file into packet and calculate the entire length
-		length = in.read(message, dataOffset, maxTftpData) + 4;
-	}
+    public TFTPdata(int numeroBloque, FileInputStream in) throws IOException {
+        this.message = new byte[LongitudMaximaDePaquete];
+        // manipular mensaje
+        this.put(opOffset, tftpDATA);
+        this.put(blkOffset, (short) numeroBloque);
+        // leer el archivo en el paquete y calcular la longitud total
+        length = in.read(message, dataOffset, DatosMaximosTFTP) + 4;
+    }
 
-	// Accessors
+    // Accesores
+    public int numeroBloque() {
+        return this.get(blkOffset);
+    }
 
-	public int blockNumber() {
-		return this.get(blkOffset);
-	}
-
-	/*
-	 * public void data(byte[] buffer) { buffer = new byte[length-4];
-	 * 
-	 * for (int i=0; i<length-4; i++) buffer[i]=message[i+dataOffset]; }
-	 */
-	
-	// File output
-	public int write(FileOutputStream out) throws IOException {
-		out.write(message, dataOffset, length - 4);
-
-		return (length - 4);
-	}
+    // Salida de archivo
+    public int write(FileOutputStream out) throws IOException {
+        out.write(message, dataOffset, length - 4);
+        return (length - 4);
+    }
 }
 
 /////////////////////////////////////////////////////////
-//ERROR packet: put the right codes and error messages // 
-//in the 'message'                                     //
+// Paquete ERROR: coloca los códigos correctos y       //
+// mensajes de error en el 'message'                   //
 /////////////////////////////////////////////////////////
 class TFTPerror extends TFTPpacket {
+    // Constructores
+    protected TFTPerror() {}
 
-	// Constructors
-	protected TFTPerror() {
-	}
-	//Generate error packet
-	public TFTPerror(int number, String message) {
-		length = 4 + message.length() + 1;
-		this.message = new byte[length];
-		put(opOffset, tftpERROR);
-		put(numOffset, (short) number);
-		put(msgOffset, message, (byte) 0);
-	}
+    // Generar paquete de error
+    public TFTPerror(int numero, String mensaje) {
+        length = 4 + mensaje.length() + 1;
+        this.message = new byte[length];
+        put(opOffset, tftpERROR);
+        put(numOffset, (short) numero);
+        put(msgOffset, mensaje, (byte) 0);
+    }
 
-	// Accessors
-	public int number() {
-		return this.get(numOffset);
-	}
-	public String message() {
-		return this.get(msgOffset, (byte) 0);
-	}
+    // Accesores
+    public int numero() {
+        return this.get(numOffset);
+    }
+
+    public String mensaje() {
+        return this.get(msgOffset, (byte) 0);
+    }
 }
 
 /////////////////////////////////////////////////////////
-//ACK packet: put the right opcode and block number in // 
-//the 'message'                                        //
+// Paquete ACK: coloca el código de operación y número //
+// de bloque correctos en el 'message'                 //
 /////////////////////////////////////////////////////////
 final class TFTPack extends TFTPpacket {
+    // Constructores
+    protected TFTPack() {}
 
-	// Constructors
-	protected TFTPack() {
-	}
-	//Generate ack packet
-	public TFTPack(int blockNumber) {
-		length = 4;
-		this.message = new byte[length];
-		put(opOffset, tftpACK);
-		put(blkOffset, (short) blockNumber);
-	}
+    // Generar paquete de ACK
+    public TFTPack(int numeroBloque) {
+        length = 4;
+        this.message = new byte[length];
+        put(opOffset, tftpACK);
+        put(blkOffset, (short) numeroBloque);
+    }
 
-	// Accessors
-	public int blockNumber() {
-		return this.get(blkOffset);
-	}
+    // Accesores
+    public int numeroBloque() {
+        return this.get(blkOffset);
+    }
 }
 
-
 /////////////////////////////////////////////////////////
-//READ packet: put the right opcode and filename, mode // 
-//in the 'message'                                     //
+// Paquete LECTURA: coloca el código de operación y    //
+// nombre de archivo, modo en el 'message'             //
 /////////////////////////////////////////////////////////
 final class TFTPread extends TFTPpacket {
+    // Constructores
+    protected TFTPread() {}
 
+    // Especificar el nombre de archivo y modo de transferencia
+    public TFTPread(String nombreArchivo, String modoDatos) {
+        length = 2 + nombreArchivo.length() + 1 + modoDatos.length() + 1;
+        message = new byte[length];
+        put(opOffset, tftpRRQ);
+        put(fileOffset, nombreArchivo, (byte) 0);
+        put(fileOffset + nombreArchivo.length() + 1, modoDatos, (byte) 0);
+    }
 
-// Constructors
-protected TFTPread() {}
+    // Accesores
+    public String nombreArchivo() {
+        return this.get(fileOffset, (byte) 0);
+    }
 
-//specify the filename and transfer mode 
-public TFTPread(String filename, String dataMode) {
-	length=2+filename.length()+1+dataMode.length()+1;
-	  message = new byte[length];
-
-	  put(opOffset,tftpRRQ);
-	  put(fileOffset,filename,(byte)0);
-	  put(fileOffset+filename.length()+1,dataMode,(byte)0);
-}
-
-// Accessors
-
-public String fileName() {
-  return this.get(fileOffset,(byte)0);
-}
-
-public String requestType() {
-  String fname = fileName();
-  return this.get(fileOffset+fname.length()+1,(byte)0);
-}
+    public String tipoSolicitud() {
+        String nombre = nombreArchivo();
+        return this.get(fileOffset + nombre.length() + 1, (byte) 0);
+    }
 }
 
 /////////////////////////////////////////////////////////
-//WRITE packet: put the right opcode and filename, mode// 
-//in the 'message'                                     //
+// Paquete ESCRITURA: coloca el código de operación y  //
+// nombre de archivo, modo en el 'message'             //
 /////////////////////////////////////////////////////////
 final class TFTPwrite extends TFTPpacket {
+    // Constructores
+    protected TFTPwrite() {}
 
-//Constructors
+    public TFTPwrite(String nombreArchivo, String modoDatos) {
+        length = 2 + nombreArchivo.length() + 1 + modoDatos.length() + 1;
+        message = new byte[length];
+        put(opOffset, tftpWRQ);
+        put(fileOffset, nombreArchivo, (byte) 0);
+        put(fileOffset + nombreArchivo.length() + 1, modoDatos, (byte) 0);
+    }
 
-protected TFTPwrite() {}
+    // Accesores
+    public String nombreArchivo() {
+        return this.get(fileOffset, (byte) 0);
+    }
 
-public TFTPwrite(String filename, String dataMode) {
-	length=2+filename.length()+1+dataMode.length()+1;
-	message = new byte[length];
-
-	put(opOffset,tftpWRQ);
-	put(fileOffset,filename,(byte)0);
-	put(fileOffset+filename.length()+1,dataMode,(byte)0);
-}
-
-//Accessors
-
-public String fileName() {
-return this.get(fileOffset,(byte)0);
-}
-
-public String requestType() {
-String fname = fileName();
-return this.get(fileOffset+fname.length()+1,(byte)0);
-}
+    public String tipoSolicitud() {
+        String nombre = nombreArchivo();
+        return this.get(fileOffset + nombre.length() + 1, (byte) 0);
+    }
 }
