@@ -1,3 +1,4 @@
+
 import java.net.*;
 import java.security.MessageDigest;
 import java.io.*;
@@ -38,7 +39,8 @@ class TFTPClienteRRQ {
 						// verificar tipo de paquete
 						if (paqueteEntrada instanceof ErrorTFTP) {
 							ErrorTFTP p = (ErrorTFTP) paqueteEntrada;
-							throw new ExcepcionTftp(p.mensaje());
+							System.err.println("ERROR");
+							System.exit(1);
 						} else if (paqueteEntrada instanceof DatosTFTP) {
 							DatosTFTP p = (DatosTFTP) paqueteEntrada;
 
@@ -71,7 +73,8 @@ class TFTPClienteRRQ {
 							// pruebaPerdida++;
 							break;
 						} else
-							throw new ExcepcionTftp("Respuesta inesperada del servidor");
+							System.err.println("ERROR de servidor");
+						System.exit(1);
 					}
 					// #######manejar tiempo de espera
 					catch (SocketTimeoutException t) {
@@ -91,7 +94,8 @@ class TFTPClienteRRQ {
 					}
 				}
 				if (limiteTiempo == 0) {
-					throw new ExcepcionTftp("La conexión falló");
+					System.err.println("ERROR de conexion");
+					System.exit(1);
 				}
 			}
 			System.out.println("\nDescarga finalizada.\nNombre de archivo: " + nombreArchivo);
@@ -102,7 +106,7 @@ class TFTPClienteRRQ {
 			System.out.println("Error de E/S, transferencia abortada");
 			File archivoIncorrecto = new File(nombreArchivo);
 			archivoIncorrecto.delete();
-		} catch (ExcepcionTftp e) {
+		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			File archivoIncorrecto = new File(nombreArchivo);
 			archivoIncorrecto.delete();

@@ -1,3 +1,4 @@
+
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -36,7 +37,8 @@ class TFTPClienteWRQ {
 			} else if (respuestaEnvio instanceof ErrorTFTP) {
 				ErrorTFTP respuesta = (ErrorTFTP) respuestaEnvio;
 				fuente.close();
-				throw new ExcepcionTftp(respuesta.mensaje());
+				System.err.println("ERROR");
+				System.exit(1);
 			}
 
 			int bytesLeidos = PaqueteTFTP.longitudMaximaPaqueteTftp;
@@ -79,7 +81,8 @@ class TFTPClienteWRQ {
 				} // fin del bucle while
 
 				if (limiteTiempo == 0) {
-					throw new ExcepcionTftp("falló la conexión");
+					System.err.println("ERROR de conexion");
+					System.exit(1);
 				}
 			}
 
@@ -92,7 +95,7 @@ class TFTPClienteWRQ {
 			System.out.println("No hay respuesta del servidor, por favor intente nuevamente");
 		} catch (IOException e) {
 			System.out.println("Error de E/S, transferencia abortada");
-		} catch (ExcepcionTftp e) {
+		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
 	}

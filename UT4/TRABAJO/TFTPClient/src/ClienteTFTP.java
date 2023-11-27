@@ -1,18 +1,10 @@
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-class UsoExcepcion extends Exception {
-	public UsoExcepcion() {
-		super();
-	}
-
-	public UsoExcepcion(String s) {
-		super(s);
-	}
-}
 
 public class ClienteTFTP {
-	public static void main(String argv[]) throws UsoExcepcion {
+	public static void main(String argv[]){
 		String host = "";
 		String nombreArchivo = "";
 		String modo = "octeto"; // modo predeterminado
@@ -20,7 +12,7 @@ public class ClienteTFTP {
 		try {
 			// Procesar línea de comandos
 			if (argv.length == 0)
-				throw new UsoExcepcion("--Uso-- \nmodo octeto:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo] \notro modo:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo] [modo]");
+				System.err.println("--Uso--:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo]");
 			// usar modo predeterminado (octeto)
 			if (argv.length == 3) {
 				host = argv[0];
@@ -34,7 +26,7 @@ public class ClienteTFTP {
 				tipo = argv[argv.length - 3];
 				nombreArchivo = argv[argv.length - 2];
 			} else
-				throw new UsoExcepcion("comando incorrecto. \n--Uso-- \nmodo octeto:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo] \notro modo:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo] [modo]");
+				System.err.println("comando incorrecto. \n--Uso-- \nmodo:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo]");
 
 			InetAddress servidor = InetAddress.getByName(host);
 
@@ -46,12 +38,12 @@ public class ClienteTFTP {
 			else if (tipo.matches("E")) {
 				TFTPClienteWRQ w = new TFTPClienteWRQ(servidor, nombreArchivo, modo);
 			} else {
-				throw new UsoExcepcion("comando incorrecto. \n--Uso-- \nmodo octeto:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo] \notro modo:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo] [modo]");
+				System.err.println("comando incorrecto. \n--Uso-- \nmodo octeto:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo] \notro modo:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo] [modo]");
 			}
 
 		} catch (UnknownHostException e) {
 			System.out.println("Host desconocido " + host);
-		} catch (UsoExcepcion e) {
+		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
 	}

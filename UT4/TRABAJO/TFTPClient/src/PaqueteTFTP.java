@@ -1,16 +1,8 @@
+
 import java.net.*;
 import java.io.*;
 import java.util.*;
 
-class ExcepcionTftp extends Exception {
-    public ExcepcionTftp() {
-        super();
-    }
-
-    public ExcepcionTftp(String s) {
-        super(s);
-    }
-}
 
 //////////////////////////////////////////////////////////////////////////////
 // Paquete GENERAL: define la estructura del paquete, miembros y métodos   //
