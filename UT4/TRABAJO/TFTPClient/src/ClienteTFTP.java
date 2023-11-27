@@ -4,27 +4,27 @@ import java.net.UnknownHostException;
 
 
 public class ClienteTFTP {
-	public static void main(String argv[]){
+	public static void main(String[] args){
 		String host = "";
 		String nombreArchivo = "";
 		String modo = "octeto"; // modo predeterminado
 		String tipo = "";
 		try {
 			// Procesar línea de comandos
-			if (argv.length == 0)
+			if (args.length == 0)
 				System.err.println("--Uso--:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo]");
 			// usar modo predeterminado (octeto)
-			if (argv.length == 3) {
-				host = argv[0];
-				tipo = argv[argv.length - 2];
-				nombreArchivo = argv[argv.length - 1];
+			if (args.length == 3) {
+				host = args[0];
+				tipo = args[args.length - 2];
+				nombreArchivo = args[args.length - 1];
 			}
 			// usar otros modos
-			else if (argv.length == 4) {
-				host = argv[0];
-				modo = argv[argv.length - 1];
-				tipo = argv[argv.length - 3];
-				nombreArchivo = argv[argv.length - 2];
+			else if (args.length == 4) {
+				host = args[0];
+				modo = args[args.length - 1];
+				tipo = args[args.length - 3];
+				nombreArchivo = args[args.length - 2];
 			} else
 				System.err.println("comando incorrecto. \n--Uso-- \nmodo:  ClienteTFTP [host] [Tipo(L/E?)] [nombreArchivo]");
 
