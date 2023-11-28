@@ -1,4 +1,5 @@
 
+
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -14,23 +15,22 @@ class TFTPClienteWRQ {
 		modoDatos = modo;
 
 		try {
-			// Crear socket y abrir archivo de salida
+
 			DatagramSocket socket = new DatagramSocket();
 			socket.setSoTimeout(2000);
 			int limiteTiempo = 5;
 
 			FileInputStream fuente = new FileInputStream("../" + nombreArchivo);
 
-			// Enviar solicitud al servidor
 
 			EscrituraTFTP paqueteSolicitud = new EscrituraTFTP(nombreArchivo, modoDatos);
 			paqueteSolicitud.enviar(servidor, 6973, socket);
 
 			PaqueteTFTP respuestaEnvio = PaqueteTFTP.recibir(socket);
 
-			int puerto = respuestaEnvio.obtenerPuerto(); // nuevo puerto para la transferencia
+			int puerto = respuestaEnvio.obtenerPuerto();
 
-			// Verificar el tipo de paquete
+
 			if (respuestaEnvio instanceof PaqueteTFTP) {
 				PaqueteTFTP respuesta = (PaqueteTFTP) respuestaEnvio;
 				System.out.println("--Servidor listo--\nSubiendo");
@@ -43,14 +43,14 @@ class TFTPClienteWRQ {
 
 			int bytesLeidos = PaqueteTFTP.longitudMaximaPaqueteTftp;
 
-			// Procesar la transferencia
+
 
 			for (int numBloque = 1; bytesLeidos == PaqueteTFTP.longitudMaximaPaqueteTftp; numBloque++) {
 				DatosTFTP paqueteSalida = new DatosTFTP(numBloque, fuente);
 				bytesLeidos = paqueteSalida.obtenerLongitud();
-				paqueteSalida.enviar(servidor, puerto, socket); // enviar el paquete
+				paqueteSalida.enviar(servidor, puerto, socket);
 
-				// Efecto visual para el usuario
+
 				if (numBloque % 500 == 0) {
 					System.out.print("\b.>");
 				}
@@ -58,7 +58,7 @@ class TFTPClienteWRQ {
 					System.out.println("\b.");
 				}
 
-				while (limiteTiempo != 0) { // esperar el ack correcto
+				while (limiteTiempo != 0) {
 					try {
 						PaqueteTFTP ack = PaqueteTFTP.recibir(socket);
 						if (!(ack instanceof PaqueteTFTP)) {
@@ -67,18 +67,18 @@ class TFTPClienteWRQ {
 
 						PaqueteTFTP a = (PaqueteTFTP) ack;
 
-						// número de puerto incorrecto
+
 						if (puerto != a.obtenerPuerto()) {
-							continue; // ignorar este paquete
+							continue;
 						}
 
 						break;
 					} catch (SocketTimeoutException t0) {
 						System.out.println("Reenviar blk " + numBloque);
-						paqueteSalida.enviar(servidor, puerto, socket); // reenviar el último paquete
+						paqueteSalida.enviar(servidor, puerto, socket);
 						limiteTiempo--;
 					}
-				} // fin del bucle while
+				}
 
 				if (limiteTiempo == 0) {
 					System.err.println("ERROR de conexion");

@@ -4,11 +4,8 @@ import java.io.*;
 import java.util.*;
 
 
-//////////////////////////////////////////////////////////////////////////////
-// Paquete GENERAL: define la estructura del paquete, miembros y métodos   //
-// necesarios del paquete TFTP. Debe ser extendido por otros paquetes      //
-// específicos (lectura, escritura, etc.).                                  //
-//////////////////////////////////////////////////////////////////////////////
+
+//Paquete: define la estructura del paquete y métodos necesarios del paquete TFTP.
 public class PaqueteTFTP {
 
     // Constantes TFTP
@@ -25,37 +22,29 @@ public class PaqueteTFTP {
 
     // Desplazamientos en el paquete
     protected static final int desplazamientoOperacion = 0;
-
-    protected static final int desplazamientoArchivo = 2;
-
-    protected static final int desplazamientoBloque = 2;
-    protected static final int desplazamientoDatos = 4;
-
     protected static final int desplazamientoNumero = 2;
+    protected static final int desplazamientoDatos = 4;
     protected static final int desplazamientoMensaje = 4;
+    protected static final int desplazamientoArchivo = 2;
+    protected static final int desplazamientoBloque = 2;
 
-    // El paquete real para la transferencia UDP
     protected byte[] mensaje;
     protected int longitud;
 
-    // Información de dirección (necesaria para respuestas)
     protected InetAddress host;
     protected int puerto;
 
-    // Constructor
     public PaqueteTFTP() {
         mensaje = new byte[longitudMaximaPaqueteTftp];
         longitud = longitudMaximaPaqueteTftp;
     }
 
-    // Métodos para recibir el paquete y convertirlo al tipo correcto (datos/ack/lectura/...)
+    // Métodos para recibir el paquete y convertirlo datos,ack,lectura
     public static PaqueteTFTP recibir(DatagramSocket sock) throws IOException {
         PaqueteTFTP in = new PaqueteTFTP(), retPak = new PaqueteTFTP();
-        // recibir datos y colocarlos en in.message
         DatagramPacket inPak = new DatagramPacket(in.mensaje, in.longitud);
         sock.receive(inPak);
 
-        // Verificar el código de operación en el mensaje y luego convertir el mensaje en el tipo correspondiente
         switch (in.get(0)) {
             case tftpRRQ:
                 retPak = new LecturaTFTP();
@@ -81,12 +70,12 @@ public class PaqueteTFTP {
         return retPak;
     }
 
-    // Método para enviar el paquete
+
     public void enviar(InetAddress ip, int puerto, DatagramSocket s) throws IOException {
         s.send(new DatagramPacket(mensaje, longitud, ip, puerto));
     }
 
-    // Métodos similares a DatagramPacket
+
     public InetAddress obtenerDireccion() {
         return host;
     }
@@ -99,14 +88,12 @@ public class PaqueteTFTP {
         return longitud;
     }
 
-    // Métodos para colocar el código de operación, número de bloque, código de error en el array de bytes 'mensaje'
+
     protected void colocar(int en, short valor) {
         mensaje[en++] = (byte) (valor >>> 8); // primer byte
         mensaje[en] = (byte) (valor % 256); // último byte
     }
 
-    @SuppressWarnings("deprecation")
-    // Coloca el nombre de archivo y el modo en 'mensaje' en 'en' seguido por el byte "del"
     protected void colocar(int en, String valor, byte del) {
         valor.getBytes(0, valor.length(), mensaje, en);
         mensaje[en + valor.length()] = del;
@@ -124,33 +111,30 @@ public class PaqueteTFTP {
     }
 }
 
-////////////////////////////////////////////////////////
-// Paquete DATOS: coloca el código correcto en el     // 
-// mensaje; lee el archivo para enviar; escribe el    //
-// archivo después de recibir                         //
-////////////////////////////////////////////////////////
+
+//Coloca el código correcto en el mensaje; lee para enviar; escribe después de recibir
+
 final class DatosTFTP extends PaqueteTFTP {
 
-    // Constructores
+
     protected DatosTFTP() {
     }
 
     public DatosTFTP(int numeroBloque, FileInputStream in) throws IOException {
         this.mensaje = new byte[longitudMaximaPaqueteTftp];
-        // manipular mensaje
+
         this.colocar(desplazamientoOperacion, tftpDATA);
         this.colocar(desplazamientoBloque, (short) numeroBloque);
-        // leer el archivo en el paquete y calcular la longitud total
+
         longitud = in.read(mensaje, desplazamientoDatos, datosMaximosTftp) + 4;
     }
 
-    // Accesores
+
 
     public int numeroBloque() {
         return this.get(desplazamientoBloque);
     }
 
-    // Salida de archivo
     public int escribir(FileOutputStream out) throws IOException {
         out.write(mensaje, desplazamientoDatos, longitud - 4);
 
@@ -158,10 +142,6 @@ final class DatosTFTP extends PaqueteTFTP {
     }
 }
 
-/////////////////////////////////////////////////////////
-// Paquete ERROR: coloca los códigos y mensajes de error// 
-// correctos en el 'mensaje'                            //
-/////////////////////////////////////////////////////////
 class ErrorTFTP extends PaqueteTFTP {
 
     // Constructores
@@ -177,7 +157,7 @@ class ErrorTFTP extends PaqueteTFTP {
         colocar(desplazamientoMensaje, mensaje, (byte) 0);
     }
 
-    // Accesores
+
     public int numero() {
         return this.get(desplazamientoNumero);
     }
@@ -187,17 +167,12 @@ class ErrorTFTP extends PaqueteTFTP {
     }
 }
 
-/////////////////////////////////////////////////////////
-// Paquete ACK: coloca el código de operación correcto y// 
-// el número de bloque en el 'mensaje'                  //
-/////////////////////////////////////////////////////////
+
+// Paquete ACK: coloca el código de operación correcto
 final class ACKTFTP extends PaqueteTFTP {
 
-    // Constructores
     protected ACKTFTP() {
     }
-
-    // Genera paquete ACK
     public ACKTFTP(int numeroBloque) {
         longitud = 4;
         this.mensaje = new byte[longitud];
@@ -205,23 +180,20 @@ final class ACKTFTP extends PaqueteTFTP {
         colocar(desplazamientoBloque, (short) numeroBloque);
     }
 
-    // Accesores
     public int numeroBloque() {
         return this.get(desplazamientoBloque);
     }
 }
 
-/////////////////////////////////////////////////////////
-// Paquete LECTURA: coloca el código de operación y el  // 
-// nombre de archivo, modo en el 'mensaje'             //
-/////////////////////////////////////////////////////////
+
+// Paquete LECTURA: coloca el código de operación y el nombre de archivo
+
 final class LecturaTFTP extends PaqueteTFTP {
 
-    // Constructores
+
     protected LecturaTFTP() {
     }
 
-    // Especifica el nombre de archivo y el modo de transferencia
     public LecturaTFTP(String nombreArchivo, String modoDatos) {
         longitud = 2 + nombreArchivo.length() + 1 + modoDatos.length() + 1;
         mensaje = new byte[longitud];
@@ -231,7 +203,6 @@ final class LecturaTFTP extends PaqueteTFTP {
         colocar(desplazamientoArchivo + nombreArchivo.length() + 1, modoDatos, (byte) 0);
     }
 
-    // Accesores
 
     public String nombreArchivo() {
         return this.get(desplazamientoArchivo, (byte) 0);
@@ -243,13 +214,12 @@ final class LecturaTFTP extends PaqueteTFTP {
     }
 }
 
-/////////////////////////////////////////////////////////
-// Paquete ESCRITURA: coloca el código de operación y el// 
-// nombre de archivo, modo en el 'mensaje'             //
-/////////////////////////////////////////////////////////
+
+// Paquete ESCRITURA: coloca el código de operación y el nombre de archivo
+
 final class EscrituraTFTP extends PaqueteTFTP {
 
-    // Constructores
+
 
     protected EscrituraTFTP() {
     }
@@ -263,7 +233,7 @@ final class EscrituraTFTP extends PaqueteTFTP {
         colocar(desplazamientoArchivo + nombreArchivo.length() + 1, modoDatos, (byte) 0);
     }
 
-    // Accesores
+
 
     public String nombreArchivo() {
         return this.get(desplazamientoArchivo, (byte) 0);
