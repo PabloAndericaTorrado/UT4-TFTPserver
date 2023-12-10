@@ -25,18 +25,18 @@ class TFTPserverRRQ extends Thread {
             host = solicitud.getAddress();
             port = solicitud.getPort();
             
-            // Crear objeto de archivo en la carpeta principal
+
             File archivoFuente = new File("../" + nombreArchivo);
 
-            // Verificar archivo
+
             if (archivoFuente.exists() && archivoFuente.isFile() && archivoFuente.canRead()) {
                 source = new FileInputStream(archivoFuente);
-                this.start(); // Abrir nuevo hilo para la transferencia
+                this.start(); 
             } else
                 throw new TftpException("violación de acceso");
 
         } catch (Exception e) {
-            TFTPerror ePak = new TFTPerror(1, e.getMessage()); // código de error 1
+            TFTPerror ePak = new TFTPerror(1, e.getMessage()); 
             try {
                 ePak.send(host, port, Socket);
             } catch (Exception f) {
@@ -46,10 +46,10 @@ class TFTPserverRRQ extends Thread {
         }
     }
 
-    // Todo está bien, abrir nuevo hilo para transferir archivo
+
     public void run() {
         int bytesRead = TFTPpacket.LongitudMaximaDePaquete;
-        // Manejar solicitud de lectura
+
         if (req instanceof TFTPread) {
             try {
                 for (int numBloque = 1; bytesRead == TFTPpacket.LongitudMaximaDePaquete; numBloque++) {
@@ -57,7 +57,7 @@ class TFTPserverRRQ extends Thread {
                     bytesRead = outPak.getLength();
                     outPak.send(host, port, Socket);
                     
-                    // Esperar el ACK correcto. Si es incorrecto, reintenta hasta 5 veces
+               
                     while (timeoutLimit != 0) {
                         try {
 							TFTPpacket ack = TFTPpacket.receive(Socket);
@@ -66,16 +66,16 @@ class TFTPserverRRQ extends Thread {
                             }
                             TFTPack a = (TFTPack) ack;
                             
-                            if (a.numeroBloque() != numBloque) { // Verificar ACK
+                            if (a.numeroBloque() != numBloque) { 
                                 throw new SocketTimeoutException("Paquete perdido, reenviar");
                             }
                             break;
-                        } catch (SocketTimeoutException t) { // Reenviar último paquete
+                        } catch (SocketTimeoutException t) { 
                             System.out.println("Reenviar bloque " + numBloque);
                             timeoutLimit--;
                             outPak.send(host, port, Socket);
                         }
-                    } // Fin del while
+                    } 
                     if (timeoutLimit == 0) {
                         throw new Exception("falla de conexión");
                     }
