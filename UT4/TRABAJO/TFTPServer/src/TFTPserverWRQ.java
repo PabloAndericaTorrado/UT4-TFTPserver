@@ -13,29 +13,29 @@ class TFTPserverWRQ extends Thread {
     protected File saveFile;
     protected String fileName;
 
-    // Inicializar solicitud de escritura
+
     public TFTPserverWRQ(TFTPwrite solicitud) throws TftpException {
         try {
             req = solicitud;
-            Socket = new DatagramSocket(); // Nuevo puerto para la transferencia
+            Socket = new DatagramSocket(); 
             Socket.setSoTimeout(1000);
 
             host = solicitud.getAddress();
             puerto = solicitud.getPort();
             fileName = solicitud.nombreArchivo();
-            // Crear objeto de archivo en la carpeta principal
+            
             saveFile = new File("../" + fileName);
 
             if (!saveFile.exists()) {
                 outFile = new FileOutputStream(saveFile);
                 TFTPack a = new TFTPack(0);
-                a.send(host, puerto, Socket); // Enviar ACK 0 al principio, listo para recibir
+                a.send(host, puerto, Socket); 
                 this.start();
             } else
                 throw new TftpException("El archivo ya existe");
 
         } catch (Exception e) {
-            TFTPerror ePak = new TFTPerror(1, e.getMessage()); // código de error 1
+            TFTPerror ePak = new TFTPerror(1, e.getMessage()); 
             try {
                 ePak.send(host, puerto, Socket);
             } catch (Exception f) {
@@ -46,24 +46,23 @@ class TFTPserverWRQ extends Thread {
     }
 
     public void run() {
-        // Manejar solicitud de escritura
+
         if (req instanceof TFTPwrite) {
             try {
                 for (int numBloque = 1, bytesOut = 512; bytesOut == 512; numBloque++) {
                     while (timeoutLimit != 0) {
                         try {
                             TFTPpacket inPak = TFTPpacket.receive(Socket);
-                            // Verificar tipo de paquete
+                          
                             if (inPak instanceof TFTPerror) {
                                 TFTPerror p = (TFTPerror) inPak;
                                 throw new TftpException(p.mensaje());
                             } else if (inPak instanceof TFTPdata) {
                                 TFTPdata p = (TFTPdata) inPak;
-                                // Verificar número de bloque
-                                if (p.numeroBloque() != numBloque) { // Se espera que sea el mismo
+                           
+                                if (p.numeroBloque() != numBloque) { 
                                     throw new SocketTimeoutException();
                                 }
-                                // Escribir en el archivo y enviar ACK
                                 bytesOut = p.write(outFile);
                                 TFTPack a = new TFTPack(numBloque);
                                 a.send(host, puerto, Socket);
