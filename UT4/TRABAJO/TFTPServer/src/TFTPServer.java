@@ -4,7 +4,7 @@ import java.util.*;
 
 public class TFTPServer {
 
-	public static void main(String argv[]) {
+	public static void main(String args[]) {
 		try {
 			// Usar puerto 6973
 			DatagramSocket socket = new DatagramSocket(6973);
