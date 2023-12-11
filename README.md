@@ -89,19 +89,19 @@ Este código controla una solicitud de lectura, enviando bloques de datos al cli
 -**TFTPserverWRQ:**
 Este código controla una solicitud de escritura, recibiendo bloques de datos del cliente y escribiéndolos en un archivo en el servidor. El proceso continúa hasta que recibe un bloque de datos con menos de 512 bytes.
 -**TFTPpacket**
-##### 1.  **`TFTPdata` (Clase para paquetes de datos TFTP):**
+##### 1.  **`TFTPdata`:**
 
 -  Extiende `TFTPpacket` y se utiliza para representar paquetes de datos en TFTP.
    -   Contiene el método `write` para escribir los datos en un `FileOutputStream`.
-##### 2.  **`TFTPerror` (Clase para paquetes de error TFTP):**
+##### 2.  **`TFTPerror`:**
 
 -   Extiende `TFTPpacket` y se utiliza para representar paquetes de error en TFTP.
     -   Tiene constructores para crear un paquete de error a partir de un número de error y un mensaje.
-##### 3.  **`TFTPread` (Clase para paquetes de solicitud de lectura TFTP):**
+##### 3.  **`TFTPread`:**
 
 -   Extiende `TFTPpacket` y se utiliza para representar paquetes de solicitud de lectura en TFTP.
     -   Tiene un constructor para crear un paquete de solicitud de lectura a partir de un nombre de archivo y un modo de datos.
-##### 4.  **`TFTPwrite` (Clase para paquetes de solicitud de escritura TFTP):**
+##### 4.  **`TFTPwrite`:**
 
 -   Extiende `TFTPpacket` y se utiliza para representar paquetes de solicitud de escritura.
     -   Tiene un constructor para crear un paquete de solicitud de escritura a partir de un nombre de archivo y un modo de datos.
