@@ -1,3 +1,4 @@
+
 ## Pablo Andérica Torrado y Alejandro Julian Matías Gutierrez.
 
 # Servidor y Cliente TFTP en Java
@@ -22,8 +23,13 @@ Este proyecto implementa un servidor y cliente TFTP (Trivial File Transfer Proto
 
 ## Uso del Programa
 
-- Descargar(Leer) archivo: **“ClienteTFTP [host] L [nombreArchivo]”**
-- Subir(Escribir) archivo: **“ClienteTFTP [host] E [nombreArchivo]”**
-- **Explicacion:**
-Al descargar un archivo el Cliente puede leer un archivo que esta en el src del servidor.
-Y al subir un archivo el Cliente escribe un fichero en el src del servidor y este lo guarda ahí.
+- javac *.java
+- **Lanzar Servidor**: java TFTPServer
+- **Descargar**(Leer) archivo: **“java ClienteTFTP [host] L [nombreArchivo]”**
+- **Subir**(Escribir) archivo: **“java ClienteTFTP [host] E [nombreArchivo]”**
+- **Explicacion:**  
+  Al descargar un archivo el Cliente puede leer un archivo que esta en el src del servidor.  
+  Y al subir un archivo el Cliente escribe un fichero en el src del servidor y este lo guarda ahí.
+- **Ejemplo:**  
+  java TFTPServer  
+  java ClienteTFTP localhost L server2.txt 
