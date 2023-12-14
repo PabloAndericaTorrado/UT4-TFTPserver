@@ -105,3 +105,9 @@ Este código controla una solicitud de escritura, recibiendo bloques de datos de
 
 -   Extiende `TFTPpacket` y se utiliza para representar paquetes de solicitud de escritura.
     -   Tiene un constructor para crear un paquete de solicitud de escritura a partir de un nombre de archivo y un modo de datos.
+
+ ## Documentación
+ https://github.com/collinprice/TFTP/blob/master/src/server/TFTPServer.java
+ RFC1350.txt
+ https://github.com/JamieMZhang/TFTP/blob/master/TFTPServer/src/TFTPServer.java
+ http://www.java2s.com/Code/Java/Network-Protocol/AsimpleJavatftpclient.htm
