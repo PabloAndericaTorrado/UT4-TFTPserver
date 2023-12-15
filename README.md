@@ -1,5 +1,6 @@
 
 
+
 ## Pablo Andérica Torrado y Alejandro Julian Matías Gutierrez.
 
 # Servidor y Cliente TFTP en Java
@@ -108,7 +109,7 @@ Este código controla una solicitud de escritura, recibiendo bloques de datos de
 
  ## Documentación
 - https://github.com/collinprice/TFTP/blob/master/src/server/TFTPServer.java
-- RFC1350.txt
 - https://github.com/JamieMZhang/TFTP/blob/master/TFTPServer/src/TFTPServer.java
 - http://www.java2s.com/Code/Java/Network-Protocol/AsimpleJavatftpclient.htm
 - https://www.ionos.es/digitalguide/servidores/know-how/tftp/
+- RFC1350.txt
